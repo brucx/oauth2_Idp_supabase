@@ -9,15 +9,31 @@ export async function GET(request: Request) {
   const redirectUri = searchParams.get('redirect_uri');
   const state = searchParams.get('state');
   const scope = searchParams.get('scope');
+  const responseType = searchParams.get('response_type');
 
-  if (!clientId || !redirectUri || !state) {
+  if (!clientId || !redirectUri || !state || !responseType) {
     return NextResponse.json(
-      { error: 'invalid_request' },
+      { 
+        error: 'invalid_request',
+        error_description: 'Missing required parameters. Required: client_id, redirect_uri, state, response_type'
+      },
       { status: 400 }
     );
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  if (responseType !== 'code') {
+    return NextResponse.json(
+      {
+        error: 'unsupported_response_type',
+        error_description: 'Only response_type=code is supported'
+      },
+      { status: 400 }
+    );
+  }
+
+  const supabase = createRouteHandlerClient({ cookies }, {
+    supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+  });
   
   // Verify client_id exists in our database
   const { data: client } = await supabase

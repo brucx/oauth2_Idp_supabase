@@ -4,168 +4,99 @@ import { Code2, Key, Lock, RefreshCw } from "lucide-react";
 
 export default function DocsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-4">Documentation</h1>
-          <p className="text-xl text-gray-600">
-            Learn how to integrate our OAuth 2.0 Identity Provider with your application
-          </p>
-        </div>
+    <main className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">OAuth2.0 PKCE Flow Documentation</h1>
 
-        <Tabs defaultValue="overview" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="authorization">Authorization</TabsTrigger>
-            <TabsTrigger value="token">Token Exchange</TabsTrigger>
-            <TabsTrigger value="refresh">Refresh Token</TabsTrigger>
-          </TabsList>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Authorization Request</h2>
+        <p className="mb-4">Send users to the authorization endpoint:</p>
+        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+          {`GET /api/oauth/authorize?
+  response_type=code
+  &redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_REDIRECT_URI || '')}
+  &code_challenge={CODE_CHALLENGE}
+  &code_challenge_method=S256
+  &scope=read write`}
+        </pre>
+        <p className="mt-4">Parameters:</p>
+        <ul className="list-disc ml-6">
+          <li><code>response_type</code>: Must be &quot;code&quot;</li>
+          <li><code>redirect_uri</code>: Your application&apos;s callback URL</li>
+          <li><code>code_challenge</code>: SHA256 hash of the code_verifier, base64url encoded</li>
+          <li><code>code_challenge_method</code>: Must be &quot;S256&quot;</li>
+          <li><code>scope</code>: Space-separated list of requested permissions</li>
+        </ul>
+      </section>
 
-          <TabsContent value="overview">
-            <Card>
-              <CardHeader>
-                <CardTitle>OAuth 2.0 Overview</CardTitle>
-                <CardDescription>
-                  Understanding the OAuth 2.0 Authorization Code Flow
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p>
-                  Our Identity Provider implements the OAuth 2.0 Authorization Code Flow,
-                  which is the most secure way to obtain access tokens for your application.
-                </p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="flex items-start space-x-3">
-                    <Lock className="h-5 w-5 text-primary mt-1" />
-                    <div>
-                      <h3 className="font-semibold">Secure by Design</h3>
-                      <p className="text-sm text-gray-600">
-                        Built with security best practices and modern authentication patterns
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Code2 className="h-5 w-5 text-primary mt-1" />
-                    <div>
-                      <h3 className="font-semibold">Easy Integration</h3>
-                      <p className="text-sm text-gray-600">
-                        Standard OAuth 2.0 endpoints and flows for simple implementation
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Token Request</h2>
+        <p className="mb-4">Exchange the authorization code for tokens:</p>
+        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+          {`POST /api/oauth/token
+Content-Type: application/x-www-form-urlencoded
 
-          <TabsContent value="authorization">
-            <Card>
-              <CardHeader>
-                <CardTitle>Authorization Endpoint</CardTitle>
-                <CardDescription>
-                  How to request authorization from users
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="font-semibold">Endpoint</h3>
-                <code className="block bg-gray-100 p-4 rounded-md">
-                  GET /api/oauth/authorize
-                </code>
+grant_type=authorization_code
+&code={AUTHORIZATION_CODE}
+&redirect_uri=${encodeURIComponent(process.env.NEXT_PUBLIC_REDIRECT_URI || '')}
+&code_verifier={CODE_VERIFIER}`}
+        </pre>
+        <p className="mt-4">Parameters:</p>
+        <ul className="list-disc ml-6">
+          <li><code>grant_type</code>: Must be &quot;authorization_code&quot;</li>
+          <li><code>code</code>: The authorization code received from the authorize endpoint</li>
+          <li><code>redirect_uri</code>: Must match the redirect_uri used in the authorization request</li>
+          <li><code>code_verifier</code>: The original random string used to generate the code_challenge</li>
+        </ul>
+      </section>
 
-                <h3 className="font-semibold mt-6">Required Parameters</h3>
-                <ul className="list-disc list-inside space-y-2">
-                  <li><code>client_id</code> - Your application&apos;s client ID</li>
-                  <li><code>redirect_uri</code> - URL to return to after authorization</li>
-                  <li><code>state</code> - Random string to prevent CSRF attacks</li>
-                  <li><code>scope</code> - Space-separated list of requested permissions</li>
-                </ul>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Refresh Token</h2>
+        <p className="mb-4">Get a new access token using a refresh token:</p>
+        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+          {`POST /api/oauth/token
+Content-Type: application/x-www-form-urlencoded
 
-                <h3 className="font-semibold mt-6">Example Request</h3>
-                <code className="block bg-gray-100 p-4 rounded-md break-all">
-                  /api/oauth/authorize?client_id=your_client_id&redirect_uri=https://your-app.com/callback&state=random_state&scope=read write
-                </code>
-              </CardContent>
-            </Card>
-          </TabsContent>
+grant_type=refresh_token
+&refresh_token={REFRESH_TOKEN}`}
+        </pre>
+        <p className="mt-4">Parameters:</p>
+        <ul className="list-disc ml-6">
+          <li><code>grant_type</code>: Must be &quot;refresh_token&quot;</li>
+          <li><code>refresh_token</code>: The refresh token received from a previous token request</li>
+        </ul>
+      </section>
 
-          <TabsContent value="token">
-            <Card>
-              <CardHeader>
-                <CardTitle>Token Endpoint</CardTitle>
-                <CardDescription>
-                  Exchange authorization code for access tokens
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <h3 className="font-semibold">Endpoint</h3>
-                <code className="block bg-gray-100 p-4 rounded-md">
-                  POST /api/oauth/token
-                </code>
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Response Format</h2>
+        <p className="mb-4">Successful token responses will return:</p>
+        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+          {`{
+  "access_token": "...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "...",
+  "scope": "read write"
+}`}
+        </pre>
+      </section>
 
-                <h3 className="font-semibold mt-6">Required Parameters</h3>
-                <ul className="list-disc list-inside space-y-2">
-                  <li><code>grant_type</code> - Must be &quot;authorization_code&quot;</li>
-                  <li><code>code</code> - The authorization code received</li>
-                  <li><code>redirect_uri</code> - Same URL used in authorization request</li>
-                  <li><code>client_id</code> - Your application&apos;s client ID</li>
-                  <li><code>client_secret</code> - Your application&apos;s client secret</li>
-                </ul>
-
-                <h3 className="font-semibold mt-6">Example Response</h3>
-                <code className="block bg-gray-100 p-4 rounded-md">
-                  {JSON.stringify({
-                    access_token: "eyJ0eXAi...",
-                    token_type: "Bearer",
-                    expires_in: 3600,
-                    refresh_token: "eyJ0eXAi...",
-                    scope: "read write"
-                  }, null, 2)}
-                </code>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="refresh">
-            <Card>
-              <CardHeader>
-                <CardTitle>Refresh Token Flow</CardTitle>
-                <CardDescription>
-                  How to refresh expired access tokens
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-3 mb-6">
-                  <RefreshCw className="h-5 w-5 text-primary" />
-                  <p className="text-sm text-gray-600">
-                    Use refresh tokens to obtain new access tokens without requiring user interaction
-                  </p>
-                </div>
-
-                <h3 className="font-semibold">Endpoint</h3>
-                <code className="block bg-gray-100 p-4 rounded-md">
-                  POST /api/oauth/token
-                </code>
-
-                <h3 className="font-semibold mt-6">Required Parameters</h3>
-                <ul className="list-disc list-inside space-y-2">
-                  <li><code>grant_type</code> - Must be &quot;refresh_token&quot;</li>
-                  <li><code>refresh_token</code> - The refresh token</li>
-                  <li><code>client_id</code> - Your application&apos;s client ID</li>
-                  <li><code>client_secret</code> - Your application&apos;s client secret</li>
-                </ul>
-
-                <h3 className="font-semibold mt-6">Security Considerations</h3>
-                <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
-                  <li>Store refresh tokens securely</li>
-                  <li>Implement token rotation</li>
-                  <li>Use HTTPS for all requests</li>
-                  <li>Validate tokens on every use</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+      <section>
+        <h2 className="text-2xl font-semibold mb-4">Error Responses</h2>
+        <p className="mb-4">Error responses will return:</p>
+        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+          {`{
+  "error": "error_code",
+  "error_description": "A description of what went wrong"
+}`}
+        </pre>
+        <p className="mt-4">Common error codes:</p>
+        <ul className="list-disc ml-6">
+          <li><code>invalid_request</code>: Missing or invalid parameters</li>
+          <li><code>invalid_grant</code>: Invalid authorization code or refresh token</li>
+          <li><code>unsupported_grant_type</code>: Invalid grant_type parameter</li>
+          <li><code>server_error</code>: Internal server error</li>
+        </ul>
+      </section>
+    </main>
   );
 }

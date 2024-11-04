@@ -1,67 +1,50 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield } from "lucide-react";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { generateCodeVerifier, generateCodeChallenge } from './utils/pkce';
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true);
+
+      // 生成 PKCE 所需的 verifier 和 challenge
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+      // 保存 code_verifier 到 sessionStorage，以便后续使用
+      sessionStorage.setItem('code_verifier', codeVerifier);
+
+      // 构建授权请求 URL
+      const params = new URLSearchParams({
+        response_type: 'code',
+        redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI || 'https://www.canva.com/apps/oauth/authorized',
+        code_challenge: codeChallenge,
+        code_challenge_method: 'S256',
+        scope: 'read write',
+      });
+
+      // 重定向到授权页面
+      window.location.href = `/api/oauth/authorize?${params.toString()}`;
+    } catch (error) {
+      console.error('Authorization failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-      <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
-            <Shield className="h-16 w-16 text-primary" />
-          </div>
-          <h1 className="text-4xl font-bold mb-4">
-            Secure Identity Provider
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            A modern OAuth 2.0 identity provider service built with Next.js and Supabase
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>OAuth 2.0</CardTitle>
-              <CardDescription>
-                Industry-standard protocol for authorization
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              Implements the Authorization Code flow for secure authentication and authorization.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Secure by Design</CardTitle>
-              <CardDescription>
-                Built with security best practices
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              Features PKCE support, secure token handling, and protection against common vulnerabilities.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Easy Integration</CardTitle>
-              <CardDescription>
-                Simple to integrate with any application
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              Well-documented endpoints and standard OAuth 2.0 flows make integration straightforward.
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mt-16 text-center">
-          <Button size="lg" asChild>
-            <a href="/docs">View Documentation</a>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <h1 className="text-4xl font-bold mb-8">OAuth2.0 Demo</h1>
+      <button
+        onClick={handleLogin}
+        disabled={isLoading}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+      >
+        {isLoading ? 'Loading...' : 'Login with OAuth'}
+      </button>
+    </main>
   );
 }
